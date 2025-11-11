@@ -15,8 +15,9 @@ This fork incorporates several modifications to ensure `opencode` builds and run
 ## Contents
 
 *   **`opencode/`**: The modified `opencode` source code.
-*   **`opencode-linux-arm64-musl-network-enabled.tar.xz`**: A pre-built, highly compressed `opencode` binary for Alpine AArch64 with network refresh for models **enabled**.
-*   **`opencode-linux-arm64-musl-network-disabled.tar.xz`**: A pre-built, highly compressed `opencode` binary for Alpine AArch64 with network refresh for models **disabled**.
+*   **Pre-built Binaries (from Releases):**
+    *   `opencode-linux-arm64-musl-network-enabled.tar.xz`: A highly compressed `opencode` binary for Alpine AArch64 with network refresh for models **enabled**.
+    *   `opencode-linux-arm64-musl-network-disabled.tar.xz`: A highly compressed `opencode` binary for Alpine AArch64 with network refresh for models **disabled**.
 *   **`opencode-termux-wrapper.sh`**: A wrapper script to simplify running `opencode` within your `proot-distro` Alpine environment.
 
 ## Prerequisites
@@ -50,11 +51,9 @@ If you wish to build the `opencode` binary yourself, follow these steps:
 1.  **Clone this repository**:
 
     ```bash
-    git clone https://github.com/your-username/opencode-alpine-aarch64-fork.git
-    cd opencode-alpine-aarch64-fork/opencode
+    git clone https://github.com/Charlie6F/opencode_termux_alpine_aarch64.git
+    cd opencode_termux_alpine_aarch64/opencode
     ```
-
-    *(Note: Replace `https://github.com/your-username/opencode-alpine-aarch64-fork.git` with the actual URL of your forked repository.)*
 
 2.  **Install Bun:** Ensure you have `bun` installed in your Termux environment. Refer to the [Bun documentation](https://bun.sh/docs/installation) for installation instructions.
 
@@ -79,7 +78,7 @@ If you wish to build the `opencode` binary yourself, follow these steps:
 
 ## Using the Pre-built Binaries
 
-1.  **Download the archives:** Download either `opencode-linux-arm64-musl-network-enabled.tar.xz` or `opencode-linux-arm64-musl-network-disabled.tar.xz` from this repository, depending on your preference.
+1.  **Download the archives:** Download either `opencode-linux-arm64-musl-network-enabled.tar.xz` or `opencode-linux-arm64-musl-network-disabled.tar.xz` from the [Releases page](https://github.com/Charlie6F/opencode_termux_alpine_aarch64/releases) of this repository, depending on your preference.
 
 2.  **Extract the archive** in your Termux environment:
 
