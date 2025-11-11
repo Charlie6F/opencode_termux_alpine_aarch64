@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import solidPlugin from "../node_modules/@opentui/solid/scripts/solid-plugin"
+import solidPlugin from "../../../node_modules/@opentui/solid/scripts/solid-plugin"
 import path from "path"
 import fs from "fs"
 import { $ } from "bun"
@@ -15,41 +15,37 @@ process.chdir(dir)
 import pkg from "../package.json"
 import { Script } from "@opencode-ai/script"
 
-const singleFlag = process.argv.includes("--single")
-
-const allTargets = [
-  ["windows", "x64"],
-  ["linux", "arm64"],
-  ["linux", "x64"],
-  ["linux", "x64-baseline"],
-  ["darwin", "x64"],
-  ["darwin", "x64-baseline"],
-  ["darwin", "arm64"],
-]
-
-const targets = singleFlag
-  ? allTargets.filter(([os, arch]) => os === process.platform && arch === process.arch)
-  : allTargets
-
 await $`rm -rf dist`
 
 const binaries: Record<string, string> = {}
-for (const [os, arch] of targets) {
-  console.log(`building ${os}-${arch}`)
-  const name = `${pkg.name}-${os}-${arch}`
+
+const buildConfigs = [
+  {
+    nameSuffix: "-network-enabled",
+    define: {
+      OPENCODE_ENABLE_NETWORK_MODELS_REFRESH: "true",
+    },
+  },
+  {
+    nameSuffix: "-network-disabled",
+    define: {
+      OPENCODE_ENABLE_NETWORK_MODELS_REFRESH: "false",
+    },
+  },
+]
+
+const os = "linux"
+const arch = "arm64-musl"
+
+for (const config of buildConfigs) {
+  const name = `${pkg.name}-${os}-${arch}${config.nameSuffix}`
+  console.log(`building ${name}`)
   await $`mkdir -p dist/${name}/bin`
 
-  const opentui = `@opentui/core-${os === "windows" ? "win32" : os}-${arch.replace("-baseline", "")}`
-  await $`mkdir -p ../../node_modules/${opentui}`
-  await $`npm pack ${opentui}@${pkg.dependencies["@opentui/core"]}`.cwd(path.join(dir, "../../node_modules"))
-  await $`tar -xf ../../node_modules/${opentui.replace("@opentui/", "opentui-")}-*.tgz -C ../../node_modules/${opentui} --strip-components=1`
+  const watcher = `@parcel/watcher-${os === "windows" ? "win32" : os}-${arch.replace("-baseline", "").replace("-musl", "")}${os === "linux" ? (arch.includes("musl") ? "-musl" : "-glibc") : ""}`
+  // Removed dynamic installation of @parcel/watcher as it should be a direct dependency
 
-  const watcher = `@parcel/watcher-${os === "windows" ? "win32" : os}-${arch.replace("-baseline", "")}${os === "linux" ? "-glibc" : ""}`
-  await $`mkdir -p ../../node_modules/${watcher}`
-  await $`npm pack ${watcher}`.cwd(path.join(dir, "../../node_modules")).quiet()
-  await $`tar -xf ../../node_modules/${watcher.replace("@parcel/", "parcel-")}-*.tgz -C ../../node_modules/${watcher} --strip-components=1`
-
-  const parserWorker = fs.realpathSync(path.resolve(dir, "./node_modules/@opentui/core/parser.worker.js"))
+  const parserWorker = fs.realpathSync(path.join(dir, "../../node_modules/@opentui/core/parser.worker.js"))
   const workerPath = "./src/cli/cmd/tui/worker.ts"
 
   await Bun.build({
@@ -69,10 +65,10 @@ for (const [os, arch] of targets) {
       OTUI_TREE_SITTER_WORKER_PATH: "/$bunfs/root/" + path.relative(dir, parserWorker),
       OPENCODE_WORKER_PATH: workerPath,
       OPENCODE_CHANNEL: `'${Script.channel}'`,
+      ...config.define,
     },
   })
 
-  await $`rm -rf ./dist/${name}/bin/tui`
   await Bun.file(`dist/${name}/package.json`).write(
     JSON.stringify(
       {

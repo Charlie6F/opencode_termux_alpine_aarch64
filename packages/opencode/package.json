@@ -86,6 +86,14 @@
     "xdg-basedir": "5.1.0",
     "yargs": "18.0.0",
     "zod": "catalog:",
-    "zod-to-json-schema": "3.24.5"
+    "zod-to-json-schema": "3.24.5",
+    "opencode-anthropic-auth": "0.0.2",
+    "opencode-copilot-auth": "0.0.5",
+    "@ai-sdk/google": "2.0.31",
+    "@ai-sdk/provider-utils": "latest",
+    "@oslojs/crypto": "latest",
+    "jose": "latest",
+    "@aws-sdk/credential-providers": "latest",
+    "@ai-sdk/openai-compatible": "latest"
   }
 }

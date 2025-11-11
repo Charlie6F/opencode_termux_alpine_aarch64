@@ -4,9 +4,10 @@ import { Bus } from "../bus"
 import { Log } from "../util/log"
 import { createOpencodeClient } from "@opencode-ai/sdk"
 import { Server } from "../server/server"
-import { BunProc } from "../bun"
 import { Instance } from "../project/instance"
 import { Flag } from "../flag/flag"
+import * as AnthropicAuthPlugin from "opencode-anthropic-auth"
+import * as CopilotAuthPlugin from "opencode-copilot-auth"
 
 export namespace Plugin {
   const log = Log.create({ service: "plugin" })
@@ -26,21 +27,14 @@ export namespace Plugin {
       directory: Instance.directory,
       $: Bun.$,
     }
-    const plugins = [...(config.plugin ?? [])]
+    const plugins = [...(config.plugin ?? [])].filter(p => typeof p !== 'string' || !p.startsWith("@opencode-ai/plugin"))
     if (!Flag.OPENCODE_DISABLE_DEFAULT_PLUGINS) {
-      plugins.push("opencode-copilot-auth@0.0.5")
-      plugins.push("opencode-anthropic-auth@0.0.2")
+      plugins.push(CopilotAuthPlugin)
+      plugins.push(AnthropicAuthPlugin)
     }
-    for (let plugin of plugins) {
-      log.info("loading plugin", { path: plugin })
-      if (!plugin.startsWith("file://")) {
-        const lastAtIndex = plugin.lastIndexOf("@")
-        const pkg = lastAtIndex > 0 ? plugin.substring(0, lastAtIndex) : plugin
-        const version = lastAtIndex > 0 ? plugin.substring(lastAtIndex + 1) : "latest"
-        plugin = await BunProc.install(pkg, version)
-      }
-      const mod = await import(plugin)
-      for (const [_name, fn] of Object.entries<PluginInstance>(mod)) {
+    for (const plugin of plugins) {
+      log.info("loading plugin", { name: plugin.name })
+      for (const [_name, fn] of Object.entries<PluginInstance>(plugin)) {
         const init = await fn(input)
         hooks.push(init)
       }

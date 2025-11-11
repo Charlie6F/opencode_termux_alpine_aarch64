@@ -4,6 +4,7 @@ import path from "path"
 import z from "zod"
 import { data } from "./models-macro" with { type: "macro" }
 import { Installation } from "../installation"
+import { Flag } from "../flag/flag"
 
 export namespace ModelsDev {
   const log = Log.create({ service: "models.dev" })
@@ -61,10 +62,12 @@ export namespace ModelsDev {
   export type Provider = z.infer<typeof Provider>
 
   export async function get() {
-    refresh()
-    const file = Bun.file(filepath)
-    const result = await file.json().catch(() => {})
-    if (result) return result as Record<string, Provider>
+    if (Flag.OPENCODE_ENABLE_NETWORK_MODELS_REFRESH) {
+      await refresh()
+      const file = Bun.file(filepath)
+      const result = await file.json().catch(() => {})
+      if (result) return result as Record<string, Provider>
+    }
     const json = await data()
     return JSON.parse(json) as Record<string, Provider>
   }
@@ -89,3 +92,5 @@ export namespace ModelsDev {
 }
 
 setInterval(() => ModelsDev.refresh(), 60 * 1000 * 60).unref()
+
+

@@ -153,13 +153,6 @@ export namespace Config {
     const gitignore = path.join(dir, ".gitignore")
     const hasGitIgnore = await Bun.file(gitignore).exists()
     if (!hasGitIgnore) await Bun.write(gitignore, ["node_modules", "package.json", "bun.lock", ".gitignore"].join("\n"))
-
-    await BunProc.run(
-      ["add", "@opencode-ai/plugin@" + (Installation.isLocal() ? "latest" : Installation.VERSION), "--exact"],
-      {
-        cwd: dir,
-      },
-    ).catch(() => {})
   }
 
   const COMMAND_GLOB = new Bun.Glob("command/**/*.md")

@@ -12,6 +12,14 @@ import { Auth } from "../auth"
 import { Instance } from "../project/instance"
 import { Global } from "../global"
 import { Flag } from "../flag/flag"
+import * as AiSdkGoogle from "@ai-sdk/google"
+import * as AiSdkProviderUtils from "@ai-sdk/provider-utils"
+import * as Zod from "zod"
+import * as Hono from "hono"
+import * as Jose from "jose"
+import * as OpenauthjsOpenauth from "@openauthjs/openauth"
+import * as AwsSdkCredentialProviders from "@aws-sdk/credential-providers"
+import * as AiSdkOpenaiCompatible from "@ai-sdk/openai-compatible"
 
 export namespace Provider {
   const log = Log.create({ service: "provider" })
@@ -464,16 +472,52 @@ export namespace Provider {
       const key = Bun.hash.xxHash32(JSON.stringify({ pkg, options }))
       const existing = s.sdk.get(key)
       if (existing) return existing
-      const installedPath = await BunProc.install(pkg, "latest")
+      let mod: any;
+
+      switch (pkg) {
+        case "@ai-sdk/google":
+          mod = AiSdkGoogle;
+          break;
+        case "@ai-sdk/provider-utils":
+          mod = AiSdkProviderUtils;
+          break;
+        case "zod":
+          mod = Zod;
+          break;
+        case "hono":
+          mod = Hono;
+          break;
+        case "jose":
+          mod = Jose;
+          break;
+        case "@openauthjs/openauth":
+          mod = OpenauthjsOpenauth;
+          break;
+        case "@aws-sdk/credential-providers":
+          mod = AwsSdkCredentialProviders;
+          break;
+        case "@ai-sdk/openai-compatible":
+          mod = AiSdkOpenaiCompatible;
+          break;
+        default:
+          throw new Error(`Unknown package: ${pkg}. Please add it to the direct imports in src/provider/provider.ts`);
+      }
+
       // The `google-vertex-anthropic` provider points to the `@ai-sdk/google-vertex` package.
       // Ref: https://github.com/sst/models.dev/blob/0a87de42ab177bebad0620a889e2eb2b4a5dd4ab/providers/google-vertex-anthropic/provider.toml
       // However, the actual export is at the subpath `@ai-sdk/google-vertex/anthropic`.
       // Ref: https://ai-sdk.dev/providers/ai-sdk-providers/google-vertex#google-vertex-anthropic-provider-usage
       // In addition, Bun's dynamic import logic does not support subpath imports,
       // so we patch the import path to load directly from `dist`.
-      const modPath =
-        provider.id === "google-vertex-anthropic" ? `${installedPath}/dist/anthropic/index.mjs` : installedPath
-      const mod = await import(modPath)
+      // This logic is now handled by direct imports, so this block is no longer needed.
+      // const modPath =
+      //   provider.id === "google-vertex-anthropic" && installedPath ? `${installedPath}/dist/anthropic/index.mjs` : installedPath
+      // if (!mod && modPath) {
+      //   mod = await import(modPath)
+      // } else if (!mod) {
+      //   // If mod is still not set, and no modPath, it means it was a direct import
+      //   // and we don't need to do anything here.
+      // }
       if (options["timeout"] !== undefined && options["timeout"] !== null) {
         // Preserve custom fetch if it exists, wrap it with timeout logic
         const customFetch = options["fetch"]
